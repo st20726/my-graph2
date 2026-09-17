@@ -220,6 +220,78 @@ st.text_area(
 
 
 # ==================================================
+# 그래프 3. 총 관객 히스토그램
+# ==================================================
+st.markdown("---")
+st.header("그래프 3. 총 관객 수 분포")
+
+hist_data = df[["movieNm", "total_audi"]].dropna().copy()
+hist_data = hist_data[hist_data["total_audi"] >= 0]
+
+if hist_data.empty:
+    st.warning("히스토그램을 그릴 수 있는 총 관객 데이터가 없습니다.")
+else:
+    fig3 = px.histogram(
+        hist_data,
+        x="total_audi",
+        nbins=20,
+        title="영화별 총 관객 수 분포",
+        labels={"total_audi": "총 관객 수(명)", "count": "영화 편수"},
+        hover_data={"movieNm": True, "total_audi": ":,."},
+    )
+    fig3.update_traces(
+        hovertemplate=(
+            "총 관객 구간: %{x}<br>"
+            "영화 편수: %{y}편"
+            "<extra></extra>"
+        )
+    )
+    fig3.update_layout(
+        xaxis_title="총 관객 수(명)",
+        yaxis_title="영화 편수",
+        margin=dict(l=20, r=20, t=70, b=20),
+    )
+    st.plotly_chart(fig3, use_container_width=True)
+
+    # 히스토그램의 최빈 구간을 동일한 구간 경계로 계산
+    counts, edges = __import__("numpy").histogram(
+        hist_data["total_audi"],
+        bins=20,
+    )
+    most_common_bin = int(counts.argmax())
+    lower = edges[most_common_bin]
+    upper = edges[most_common_bin + 1]
+    bin_count = int(counts[most_common_bin])
+
+    top_movie = hist_data.loc[hist_data["total_audi"].idxmax()]
+
+    st.markdown(
+        f"**대부분의 영화가 몰린 구간:** "
+        f"{lower:,.0f}명 이상 ~ {upper:,.0f}명 미만 "
+        f"(이 구간에 {bin_count}편)"
+    )
+    st.markdown(
+        f"**총 관객이 가장 많은 영화:** "
+        f"{top_movie['movieNm']} "
+        f"({top_movie['total_audi']:,.0f}명)"
+    )
+
+
+# --------------------------------------------------
+# 그래프 3 아래 사용자 작성 공간
+# --------------------------------------------------
+st.markdown("### 이 그래프로 알 수 있는 것")
+st.text_area(
+    "설명 문장을 직접 작성하세요.",
+    value="",
+    placeholder="이 그래프로 알 수 있는 것을 한 문장으로 작성해 보세요.",
+    height=100,
+    key="graph3_explanation",
+    label_visibility="collapsed",
+)
+
+
+# ==================================================
 # 다음 그래프를 추가할 공간
 # ==================================================
 st.markdown("---")
