@@ -1,299 +1,227 @@
-import re
-
+import streamlit as st
 import pandas as pd
 import plotly.express as px
-import streamlit as st
 
+1. 페이지 기본 설정
 
-# --------------------------------------------------
-# 기본 설정
-# --------------------------------------------------
 st.set_page_config(
-    page_title="영화 데이터 그래프 도감 2 - 분포와 관계",
-    page_icon="🎬",
-    layout="wide",
+page_title="영화 데이터 그래프 도감 2 - 분포와 관계",
+page_icon="🎬",
+layout="wide"
 )
 
-st.title("영화 데이터 그래프 도감 2 - 분포와 관계")
-st.write("1년간 박스오피스 10위권에 든 영화 데이터를 이용해 영화들의 분포와 관계를 살펴봅니다.")
-
-
-# --------------------------------------------------
-# 데이터 불러오기
-# --------------------------------------------------
-DATA_URL = "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_movies.csv"
-
+2. 데이터 로드 및 전처리 함수
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv(DATA_URL)
+url = "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_movies.csv"
+df = pd.read_csv(url)
 
-    # 날짜 열: 여덟 자리 숫자를 실제 날짜로 변환
-    df["openDt"] = pd.to_datetime(
-        df["openDt"].astype(str),
-        format="%Y%m%d",
-        errors="coerce",
-    )
+# genre 열에서 세로막대 기호(|)로 분리되어 있는 경우 첫 번째 장르만 사용
+df['genre'] = df['genre'].astype(str).apply(lambda x: x.split('|')[0].strip())
 
-    # 숫자형 열 변환
-    numeric_columns = [
-        "first_scrn",
-        "first_show",
-        "first_week_audi",
-        "total_audi",
-        "days_in_top10",
-    ]
-
-    for column in numeric_columns:
-        df[column] = pd.to_numeric(df[column], errors="coerce")
-
-    # genre의 여러 장르 중 첫 번째 장르만 사용
-    # 실제 데이터에는 |와 /가 모두 사용된 행이 있어 둘 다 처리
-    def get_first_genre(value):
-        if pd.isna(value):
-            return "알 수 없음"
-
-        text = str(value).strip()
-        if not text:
-            return "알 수 없음"
-
-        first_genre = re.split(r"[|/]", text)[0].strip()
-        return first_genre if first_genre else "알 수 없음"
-
-    df["first_genre"] = df["genre"].apply(get_first_genre)
-
-    return df
+# 수치형 데이터 형변환 (결측치 처리)
+numeric_cols = ['first_scrn', 'first_show', 'first_week_audi', 'total_audi', 'days_in_top10']
+for col in numeric_cols:
+    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+    
+return df
 
 
-try:
-    df = load_data()
-except Exception as e:
-    st.error("데이터를 불러오는 중 문제가 발생했습니다.")
-    st.code(str(e))
-    st.stop()
+df = load_data()
 
+3. 헤더 및 데이터 소개
 
-# --------------------------------------------------
-# 데이터 개요
-# --------------------------------------------------
-with st.expander("데이터 확인하기"):
-    st.write(f"총 영화 수: **{len(df):,}편**")
-    st.dataframe(
-        df[
-            [
-                "movieCd",
-                "movieNm",
-                "openDt",
-                "genre",
-                "nation",
-                "first_scrn",
-                "first_show",
-                "first_week_audi",
-                "total_audi",
-                "days_in_top10",
-            ]
-        ],
-        use_container_width=True,
-        hide_index=True,
-    )
+st.title("🎬 영화 데이터 그래프 도감 2 - 분포와 관계")
+st.markdown("""
+박스오피스 상위권 영화 216편의 데이터를 바탕으로 장르별 분포, 흥행 관객 수, 그리고 스크린 수 및 상영 기간과의 관계를 시각적으로 탐색합니다.
+""")
 
+st.divider()
 
-# ==================================================
-# 그래프 1. 장르별 영화 편수
-# ==================================================
-st.markdown("---")
-st.header("그래프 1. 장르별 영화 편수")
+데이터 요약 정보 확장 영역
 
-genre_counts = (
-    df["first_genre"]
-    .value_counts()
-    .rename_axis("장르")
-    .reset_index(name="영화 편수")
+with st.expander("📄 원본 데이터 요약표 보기"):
+st.dataframe(df, use_container_width=True)
+st.caption(f"총 {len(df)}개 영화 데이터 로드 완료")
+
+st.markdown("## 📊 데이터 분포와 관계 분석")
+
+-------------------------------------------------------------------
+
+그래프 1: 장르별 영화 편수 (도넛 차트)
+
+-------------------------------------------------------------------
+
+st.subheader("1. 장르별 영화 편수 분포 (도넛 그래프)")
+
+genre_counts = df['genre'].value_counts().reset_index()
+genre_counts.columns = ['장르', '편수']
+
+fig1 = px.pie(
+genre_counts,
+names='장르',
+values='편수',
+hole=0.4,
+color_discrete_sequence=px.colors.qualitative.Pastel
 )
 
-fig = px.pie(
-    genre_counts,
-    names="장르",
-    values="영화 편수",
-    hole=0.55,
-    title="장르별 영화 편수",
+fig1.update_traces(
+textinfo='percent+label',
+hovertemplate='장르: %{label}
+
+
+
+영화 편수: %{value}편
+
+
+
+점유율: %{percent}'
 )
 
-# 마우스를 올렸을 때 편수와 비율이 보이도록 설정
-fig.update_traces(
-    textinfo="label",
-    hovertemplate=(
-        "<b>%{label}</b><br>"
-        "편수: %{value}편<br>"
-        "비율: %{percent}<extra></extra>"
-    ),
+fig1.update_layout(
+margin=dict(t=30, b=30, l=10, r=10),
+legend_title_text="장르 목록"
 )
 
-fig.update_layout(
-    legend_title_text="장르",
-    margin=dict(l=20, r=20, t=70, b=20),
-)
+st.plotly_chart(fig1, use_container_width=True)
 
-st.plotly_chart(fig, use_container_width=True)
+그래프 1 분석 결과
 
+st.info("💡 이 그래프로 알 수 있는 것: 드라마, 애니메이션, 액션 장르가 전체 개봉작의 과반수를 차지하며 박스오피스 상위권 시장을 주도하고 있음을 알 수 있습니다.")
 
-# --------------------------------------------------
-# 그래프 아래 사용자 작성 공간
-# --------------------------------------------------
-st.markdown("### 이 그래프로 알 수 있는 것")
-st.text_area(
-    "설명 문장을 직접 작성하세요.",
-    value="",
-    placeholder="이 그래프로 알 수 있는 것을 한 문장으로 작성해 보세요.",
-    height=100,
-    key="graph1_explanation",
-    label_visibility="collapsed",
-)
+st.divider()
 
+-------------------------------------------------------------------
 
-# ==================================================
-# 그래프 2. 장르별 영화 트리맵
-# ==================================================
-st.markdown("---")
-st.header("그래프 2. 장르별 영화 트리맵")
+그래프 2: 장르별 영화 흥행 규모 (트리맵)
 
-st.write("각 장르 안에 영화가 들어 있으며, 영화 칸의 크기는 총 관객 수에 비례합니다.")
+-------------------------------------------------------------------
 
-# 영화명이 중복되는 경우를 대비해 장르 + 영화명 기준으로 집계
-treemap_data = (
-    df[["first_genre", "movieNm", "total_audi"]]
-    .dropna(subset=["movieNm", "total_audi"])
-    .copy()
-)
-
-# 총 관객이 0 이하인 데이터는 트리맵의 크기 계산에 사용할 수 없으므로 제외
-treemap_data = treemap_data[treemap_data["total_audi"] > 0]
-
-# 같은 영화가 여러 행에 있을 경우 총 관객을 합산
-treemap_data = (
-    treemap_data
-    .groupby(["first_genre", "movieNm"], as_index=False)["total_audi"]
-    .sum()
-)
+st.subheader("2. 장르 및 영화별 총 관객 수 (트리맵)")
 
 fig2 = px.treemap(
-    treemap_data,
-    path=[
-        px.Constant("전체"),
-        "first_genre",
-        "movieNm",
-    ],
-    values="total_audi",
-    title="장르별 영화 총 관객 트리맵",
+df,
+path=[px.Constant("전체 영화"), 'genre', 'movieNm'],
+values='total_audi',
+color='genre',
+color_discrete_sequence=px.colors.qualitative.Pastel,
+hover_data={'total_audi': ':,'}
 )
 
-# 마우스를 올렸을 때 영화명과 총 관객이 보이도록 설정
 fig2.update_traces(
-    customdata=treemap_data["total_audi"],
-    hovertemplate=(
-        "<b>%{label}</b><br>"
-        "총 관객: %{value:,.0f}명"
-        "<extra></extra>"
-    ),
-    root_color="lightgrey",
+hovertemplate='%{label}
+
+
+
+총 관객 수: %{value:,.0f}명'
 )
 
 fig2.update_layout(
-    margin=dict(l=10, r=10, t=70, b=10),
+margin=dict(t=30, b=30, l=10, r=10)
 )
 
 st.plotly_chart(fig2, use_container_width=True)
 
+그래프 2 분석 결과
 
-# --------------------------------------------------
-# 그래프 2 아래 사용자 작성 공간
-# --------------------------------------------------
-st.markdown("### 이 그래프로 알 수 있는 것")
-st.text_area(
-    "설명 문장을 직접 작성하세요.",
-    value="",
-    placeholder="이 그래프로 알 수 있는 것을 한 문장으로 작성해 보세요.",
-    height=100,
-    key="graph2_explanation",
-    label_visibility="collapsed",
+st.info("💡 이 그래프로 알 수 있는 것: 동일한 장르 내에서도 특정 메가 히트 영화(예: 관객 수가 압도적인 작품)가 장르 전체의 총 관객 수 지표를 크게 견인하고 있음을 확인할 수 있습니다.")
+
+st.divider()
+
+-------------------------------------------------------------------
+
+그래프 3: 총 관객 수 분포 (히스토그램)
+
+-------------------------------------------------------------------
+
+st.subheader("3. 총 관객 수 분포 (히스토그램)")
+
+fig3 = px.histogram(
+df,
+x="total_audi",
+nbins=30,
+color_discrete_sequence=['#4B8BF5'],
+labels={'total_audi': '총 관객 수 (명)'}
 )
 
-
-# ==================================================
-# 그래프 3. 총 관객 히스토그램
-# ==================================================
-st.markdown("---")
-st.header("그래프 3. 총 관객 수 분포")
-
-hist_data = df[["movieNm", "total_audi"]].dropna().copy()
-hist_data = hist_data[hist_data["total_audi"] >= 0]
-
-if hist_data.empty:
-    st.warning("히스토그램을 그릴 수 있는 총 관객 데이터가 없습니다.")
-else:
-    fig3 = px.histogram(
-        hist_data,
-        x="total_audi",
-        nbins=20,
-        title="영화별 총 관객 수 분포",
-        labels={"total_audi": "총 관객 수(명)", "count": "영화 편수"},
-        hover_data={"movieNm": True, "total_audi": ":,."},
-    )
-    fig3.update_traces(
-        hovertemplate=(
-            "총 관객 구간: %{x}<br>"
-            "영화 편수: %{y}편"
-            "<extra></extra>"
-        )
-    )
-    fig3.update_layout(
-        xaxis_title="총 관객 수(명)",
-        yaxis_title="영화 편수",
-        margin=dict(l=20, r=20, t=70, b=20),
-    )
-    st.plotly_chart(fig3, use_container_width=True)
-
-    # 히스토그램의 최빈 구간을 동일한 구간 경계로 계산
-    counts, edges = __import__("numpy").histogram(
-        hist_data["total_audi"],
-        bins=20,
-    )
-    most_common_bin = int(counts.argmax())
-    lower = edges[most_common_bin]
-    upper = edges[most_common_bin + 1]
-    bin_count = int(counts[most_common_bin])
-
-    top_movie = hist_data.loc[hist_data["total_audi"].idxmax()]
-
-    st.markdown(
-        f"**대부분의 영화가 몰린 구간:** "
-        f"{lower:,.0f}명 이상 ~ {upper:,.0f}명 미만 "
-        f"(이 구간에 {bin_count}편)"
-    )
-    st.markdown(
-        f"**총 관객이 가장 많은 영화:** "
-        f"{top_movie['movieNm']} "
-        f"({top_movie['total_audi']:,.0f}명)"
-    )
-
-
-# --------------------------------------------------
-# 그래프 3 아래 사용자 작성 공간
-# --------------------------------------------------
-st.markdown("### 이 그래프로 알 수 있는 것")
-st.text_area(
-    "설명 문장을 직접 작성하세요.",
-    value="",
-    placeholder="이 그래프로 알 수 있는 것을 한 문장으로 작성해 보세요.",
-    height=100,
-    key="graph3_explanation",
-    label_visibility="collapsed",
+fig3.update_layout(
+yaxis_title="영화 수 (편)",
+bargap=0.1,
+margin=dict(t=30, b=30, l=10, r=10)
 )
 
+st.plotly_chart(fig3, use_container_width=True)
 
-# ==================================================
-# 다음 그래프를 추가할 공간
-# ==================================================
-st.markdown("---")
-st.header("다음 그래프")
-st.info("이 구역부터 앞으로 새로운 분포·관계 그래프를 추가하면 됩니다.")
+데이터 탐색: 최고 관객 영화 및 집중 구간 계산
+
+max_movie = df.loc[df['total_audi'].idxmax()]
+top_movie_name = max_movie['movieNm']
+top_movie_audi = int(max_movie['total_audi'])
+
+under_2m_count = (df['total_audi'] <= 2000000).sum()
+under_2m_pct = (under_2m_count / len(df)) * 100
+
+그래프 3 분석 결과
+
+st.info(
+f"💡 이 그래프로 알 수 있는 것: 대부분의 영화(전체의 약 {under_2m_pct:.1f}%, {under_2m_count}편)가 총 관객 수 200만 명 이하 구간에 집중되어 있으며, "
+f"가장 많은 관객을 동원한 영화는 '{top_movie_name}'(총 {top_movie_audi:,.0f}명)입니다."
+)
+
+st.divider()
+
+-------------------------------------------------------------------
+
+그래프 4: 개봉일 스크린 수 vs 총 관객 수 (산점도)
+
+-------------------------------------------------------------------
+
+st.subheader("4. 개봉일 스크린 수와 총 관객 수의 관계 (산점도)")
+
+fig4 = px.scatter(
+df,
+x="first_scrn",
+y="total_audi",
+color="genre",
+hover_name="movieNm",
+hover_data={
+"first_scrn": ":,f",
+"total_audi": ":,f",
+"genre": True
+},
+labels={
+"first_scrn": "개봉일 스크린 수 (개)",
+"total_audi": "총 관객 수 (명)",
+"genre": "장르"
+},
+color_discrete_sequence=px.colors.qualitative.Set2
+)
+
+fig4.update_traces(
+marker=dict(size=10, opacity=0.8),
+hovertemplate='%{hovertext}
+
+
+
+장르: %{customdata[0]}
+
+
+
+개봉일 스크린 수: %{x:,.0f}개
+
+
+
+총 관객 수: %{y:,.0f}명'
+)
+
+fig4.update_layout(
+margin=dict(t=30, b=30, l=10, r=10),
+legend_title_text="장르"
+)
+
+st.plotly_chart(fig4, use_container_width=True)
+
+그래프 4 분석 결과
+
+st.info("💡 이 그래프로 알 수 있는 것: 개봉일 스크린 수가 많을수록 총 관객 수도 전반적으로 증가하는 양의 상관관계를 나타내며, 초기 상영관 확보가 최종 흥행 규모에 중요한 역할을 함을 알 수 있습니다.")
