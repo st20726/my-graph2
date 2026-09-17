@@ -33,9 +33,7 @@ df = load_data()
 3. 헤더 및 데이터 소개
 
 st.title("🎬 영화 데이터 그래프 도감 2 - 분포와 관계")
-st.markdown("""
-박스오피스 상위권 영화 216편의 데이터를 바탕으로 장르별 분포, 흥행 관객 수, 그리고 스크린 수 및 상영 기간과의 관계를 시각적으로 탐색합니다.
-""")
+st.markdown("박스오피스 상위권 영화 216편의 데이터를 바탕으로 장르별 분포, 흥행 관객 수, 그리고 스크린 수 및 상영 기간과의 관계를 시각적으로 탐색합니다.")
 
 st.divider()
 
@@ -68,7 +66,7 @@ color_discrete_sequence=px.colors.qualitative.Pastel
 
 fig1.update_traces(
 textinfo='percent+label',
-hovertemplate="""장르: %{label}
+hovertemplate="장르: %{label}
 
 
 
@@ -76,7 +74,7 @@ hovertemplate="""장르: %{label}
 
 
 
-점유율: %{percent}"""
+점유율: %{percent}"
 )
 
 fig1.update_layout(
@@ -85,8 +83,6 @@ legend_title_text="장르 목록"
 )
 
 st.plotly_chart(fig1, use_container_width=True)
-
-그래프 1 분석 결과
 
 st.info("💡 이 그래프로 알 수 있는 것: 드라마, 애니메이션, 액션 장르가 전체 개봉작의 과반수를 차지하며 박스오피스 상위권 시장을 주도하고 있음을 알 수 있습니다.")
 
@@ -109,11 +105,11 @@ color_discrete_sequence=px.colors.qualitative.Pastel
 )
 
 fig2.update_traces(
-hovertemplate="""%{label}
+hovertemplate="%{label}
 
 
 
-총 관객 수: %{value:,.0f}명"""
+총 관객 수: %{value:,.0f}명"
 )
 
 fig2.update_layout(
@@ -121,8 +117,6 @@ margin=dict(t=30, b=30, l=10, r=10)
 )
 
 st.plotly_chart(fig2, use_container_width=True)
-
-그래프 2 분석 결과
 
 st.info("💡 이 그래프로 알 수 있는 것: 동일한 장르 내에서도 특정 메가 히트 영화가 장르 전체의 총 관객 수 지표를 크게 견인하고 있음을 확인할 수 있습니다.")
 
@@ -145,11 +139,11 @@ labels={'total_audi': '총 관객 수 (명)'}
 )
 
 fig3.update_traces(
-hovertemplate="""관객 수 구간: %{x:,.0f}명
+hovertemplate="관객 수 구간: %{x:,.0f}명
 
 
 
-영화 수: %{y}편"""
+영화 수: %{y}편"
 )
 
 fig3.update_layout(
@@ -168,8 +162,6 @@ top_movie_audi = int(max_movie['total_audi'])
 
 under_2m_count = (df['total_audi'] <= 2000000).sum()
 under_2m_pct = (under_2m_count / len(df)) * 100
-
-그래프 3 분석 결과
 
 st.info(
 f"💡 이 그래프로 알 수 있는 것: 대부분의 영화(전체의 약 {under_2m_pct:.1f}%, {under_2m_count}편)가 총 관객 수 200만 명 이하 구간에 집중되어 있으며, "
@@ -202,7 +194,7 @@ color_discrete_sequence=px.colors.qualitative.Set2
 
 fig4.update_traces(
 marker=dict(size=10, opacity=0.8),
-hovertemplate="""%{hovertext}
+hovertemplate="%{hovertext}
 
 
 
@@ -210,7 +202,7 @@ hovertemplate="""%{hovertext}
 
 
 
-총 관객 수: %{y:,.0f}명"""
+총 관객 수: %{y:,.0f}명"
 )
 
 fig4.update_layout(
@@ -219,8 +211,6 @@ legend_title_text="장르"
 )
 
 st.plotly_chart(fig4, use_container_width=True)
-
-그래프 4 분석 결과
 
 st.info("💡 이 그래프로 알 수 있는 것: 개봉일 스크린 수가 많을수록 총 관객 수도 전반적으로 증가하는 양의 상관관계를 나타내며, 초기 상영관 확보가 최종 흥행 규모에 중요한 역할을 함을 알 수 있습니다.")
 
@@ -255,7 +245,7 @@ color_discrete_sequence=px.colors.qualitative.Pastel
 )
 
 fig5.update_traces(
-hovertemplate="""%{hovertext}
+hovertemplate="%{hovertext}
 
 
 
@@ -263,7 +253,7 @@ hovertemplate="""%{hovertext}
 
 
 
-총 관객 수: %{y:,.0f}명"""
+총 관객 수: %{y:,.0f}명"
 )
 
 fig5.update_layout(
@@ -272,7 +262,5 @@ showlegend=False
 )
 
 st.plotly_chart(fig5, use_container_width=True)
-
-그래프 5 분석 결과
 
 st.info("💡 이 그래프로 알 수 있는 것: 영화 편수가 10편 이상인 주요 장르 중에서도, 상자 밖의 이상치 점(대형 흥행작)의 유무에 따라 장르 내 흥행 편차가 매우 크다는 것을 확인할 수 있습니다.")
