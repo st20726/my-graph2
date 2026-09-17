@@ -18,7 +18,7 @@ url = "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_movi
 df = pd.read_csv(url)
 
 # genre 열에서 세로막대 기호(|)로 분리되어 있는 경우 첫 번째 장르만 사용
-df['genre'] = df['genre'].astype(str).apply(lambda x: x.split('|')[0].strip() if pd.notna(x) else '기타')
+df['genre'] = df['genre'].astype(str).apply(lambda x: x.split('|')[0].strip() if pd.notna(x) and x != 'nan' else '기타')
 
 # 수치형 데이터 형변환 (결측치 처리)
 numeric_cols = ['first_scrn', 'first_show', 'first_week_audi', 'total_audi', 'days_in_top10']
@@ -68,7 +68,7 @@ color_discrete_sequence=px.colors.qualitative.Pastel
 
 fig1.update_traces(
 textinfo='percent+label',
-hovertemplate="장르: %{label}
+hovertemplate="""장르: %{label}
 
 
 
@@ -76,7 +76,7 @@ hovertemplate="장르: %{label}
 
 
 
-점유율: %{percent}"
+점유율: %{percent}"""
 )
 
 fig1.update_layout(
@@ -109,11 +109,11 @@ color_discrete_sequence=px.colors.qualitative.Pastel
 )
 
 fig2.update_traces(
-hovertemplate="%{label}
+hovertemplate="""%{label}
 
 
 
-총 관객 수: %{value:,.0f}명"
+총 관객 수: %{value:,.0f}명"""
 )
 
 fig2.update_layout(
@@ -142,6 +142,14 @@ x="total_audi",
 nbins=30,
 color_discrete_sequence=['#4B8BF5'],
 labels={'total_audi': '총 관객 수 (명)'}
+)
+
+fig3.update_traces(
+hovertemplate="""관객 수 구간: %{x:,.0f}명
+
+
+
+영화 수: %{y}편"""
 )
 
 fig3.update_layout(
@@ -194,7 +202,7 @@ color_discrete_sequence=px.colors.qualitative.Set2
 
 fig4.update_traces(
 marker=dict(size=10, opacity=0.8),
-hovertemplate="%{hovertext}
+hovertemplate="""%{hovertext}
 
 
 
@@ -202,7 +210,7 @@ hovertemplate="%{hovertext}
 
 
 
-총 관객 수: %{y:,.0f}명"
+총 관객 수: %{y:,.0f}명"""
 )
 
 fig4.update_layout(
@@ -247,7 +255,7 @@ color_discrete_sequence=px.colors.qualitative.Pastel
 )
 
 fig5.update_traces(
-hovertemplate="%{hovertext}
+hovertemplate="""%{hovertext}
 
 
 
@@ -255,7 +263,7 @@ hovertemplate="%{hovertext}
 
 
 
-총 관객 수: %{y:,.0f}명"
+총 관객 수: %{y:,.0f}명"""
 )
 
 fig5.update_layout(
