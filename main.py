@@ -528,12 +528,9 @@ st.caption(
 )
 # --------------------------------------------------
 # 그래프 8
-# 총 관객 수와 첫 주 관객 비율의 관계
+# 전체 영화의 첫 주 관객 비율 비교
 # --------------------------------------------------
-section_title(
-    8,
-    "총 관객 수가 많아질수록 첫 주 관객 비율은 어떻게 달라질까?"
-)
+section_title(8, "총 관객 중 첫 주 관객 비율")
 
 ratio_df = df[
     df["first_week_audi"].notna()
@@ -545,7 +542,7 @@ ratio_df = df[
 
 if not ratio_df.empty:
 
-    # 첫 주 관객 비율 계산
+    # 첫 주 관객이 전체 관객에서 차지하는 비율
     ratio_df["first_week_ratio"] = (
         ratio_df["first_week_audi"]
         / ratio_df["total_audi"]
@@ -564,7 +561,7 @@ if not ratio_df.empty:
             "first_week_ratio": ":.1f",
             "genre": True
         },
-        title="총 관객 수와 첫 주 관객 비율의 관계",
+        title="전체 영화의 총 관객과 첫 주 관객 비율",
         labels={
             "total_audi": "총 관객 수(명)",
             "first_week_ratio": "첫 주 관객 비율(%)",
@@ -575,16 +572,11 @@ if not ratio_df.empty:
     fig8.update_layout(
         height=650,
         xaxis_title="총 관객 수(명)",
-        yaxis_title="첫 주 관객 비율(%)"
+        yaxis_title="전체 관객 중 첫 주 관객 비율(%)"
     )
 
     fig8.update_yaxes(
         range=[0, 100]
-    )
-
-    # X축을 로그 스케일로 변경
-    fig8.update_xaxes(
-        type="log"
     )
 
     st.plotly_chart(
@@ -594,7 +586,8 @@ if not ratio_df.empty:
 
     st.caption(
         "점 하나가 영화 한 편을 나타냅니다. "
-        "총 관객 수는 영화마다 차이가 크기 때문에 X축을 로그 스케일로 표시했습니다. "
+        "위쪽에 있을수록 전체 관객 중 첫 주에 관람한 관객의 비율이 높고, "
+        "아래쪽에 있을수록 첫 주 이후에도 관객이 많이 유입된 영화입니다. "
         "영화명은 점에 마우스를 올리면 확인할 수 있습니다."
     )
 
