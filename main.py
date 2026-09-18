@@ -263,13 +263,33 @@ if not hist_df.empty:
     # 가장 관객이 많은 영화
     max_row = hist_df.loc[hist_df["total_audi"].idxmax()]
 
-    # 대부분의 영화가 몰린 구간 계산
-    counts, bin_edges = pd.cut(
+       # 대부분의 영화가 몰린 구간 계산
+    import numpy as np
+
+    hist_counts, hist_edges = np.histogram(
         hist_df["total_audi"],
-        bins=30,
-        include_lowest=True,
-        retbins=True
-    ).value_counts().sort_values(ascending=False), None
+        bins=30
+    )
+
+    max_bin_idx = hist_counts.argmax()
+
+    lower = hist_edges[max_bin_idx]
+    upper = hist_edges[max_bin_idx + 1]
+
+    st.info(
+        f"📊 가장 많은 영화가 몰린 구간: "
+        f"{lower:,.0f}명 ~ {upper:,.0f}명 "
+        f"({hist_counts[max_bin_idx]}편)"
+    )
+
+    # 가장 관객이 많은 영화
+    max_row = hist_df.loc[hist_df["total_audi"].idxmax()]
+
+    st.info(
+        f"🏆 가장 관객이 많은 영화: "
+        f"{max_row['movieNm']} "
+        f"({max_row['total_audi']:,.0f}명)"
+    )
 
     # 히스토그램과 동일한 방식으로 구간 계산
     hist_counts, hist_edges = __import__("numpy").histogram(
