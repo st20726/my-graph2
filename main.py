@@ -528,83 +528,67 @@ st.caption(
 )
 # --------------------------------------------------
 # 그래프 8
-# 총 관객 중 첫 주 관객 비율이 높은 영화
+# 전체 영화의 첫 주 관객 비율 비교
 # --------------------------------------------------
-section_title(8, "첫 주 관객 비율이 높은 영화")
+section_title(8, "총 관객 중 첫 주 관객 비율")
 
 ratio_df = df[
     df["first_week_audi"].notna()
     & df["total_audi"].notna()
     & (df["total_audi"] > 0)
     & (df["first_week_audi"] >= 0)
+    & (df["first_week_audi"] <= df["total_audi"])
 ].copy()
 
 if not ratio_df.empty:
 
-    # 첫 주 관객이 총 관객에서 차지하는 비율
+    # 첫 주 관객이 전체 관객에서 차지하는 비율
     ratio_df["first_week_ratio"] = (
         ratio_df["first_week_audi"]
         / ratio_df["total_audi"]
         * 100
     )
 
-    # 비율이 높은 영화 15편
-    top_ratio_df = (
-        ratio_df
-        .sort_values("first_week_ratio", ascending=False)
-        .head(15)
-        .sort_values("first_week_ratio", ascending=True)
-    )
-
-    fig8 = px.bar(
-        top_ratio_df,
-        x="first_week_ratio",
-        y="movieNm",
-        orientation="h",
+    fig8 = px.scatter(
+        ratio_df,
+        x="total_audi",
+        y="first_week_ratio",
         color="genre",
+        hover_name="movieNm",
         hover_data={
-            "first_week_ratio": ":.1f",
-            "first_week_audi": ":,.0f",
             "total_audi": ":,.0f",
+            "first_week_audi": ":,.0f",
+            "first_week_ratio": ":.1f",
             "genre": True
         },
-        title="총 관객 중 첫 주 관객 비율이 높은 영화 TOP 15",
+        title="전체 영화의 총 관객과 첫 주 관객 비율",
         labels={
+            "total_audi": "총 관객 수(명)",
             "first_week_ratio": "첫 주 관객 비율(%)",
-            "movieNm": "영화명",
-            "first_week_audi": "첫 주 관객 수",
-            "total_audi": "총 관객 수",
             "genre": "장르"
         }
     )
 
     fig8.update_layout(
         height=650,
-        xaxis_title="첫 주 관객 비율(%)",
-        yaxis_title="영화명"
+        xaxis_title="총 관객 수(명)",
+        yaxis_title="전체 관객 중 첫 주 관객 비율(%)"
     )
 
-    fig8.update_traces(
-        texttemplate="%{x:.1f}%",
-        textposition="outside"
+    fig8.update_yaxes(
+        range=[0, 100]
     )
 
-    st.plotly_chart(fig8, use_container_width=True)
-
-    # 가장 비율이 높은 영화
-    top_movie = ratio_df.loc[
-        ratio_df["first_week_ratio"].idxmax()
-    ]
-
-    st.info(
-        f"🎬 첫 주 관객 비율이 가장 높은 영화: "
-        f"{top_movie['movieNm']} "
-        f"({top_movie['first_week_ratio']:.1f}%)"
+    st.plotly_chart(
+        fig8,
+        use_container_width=True
     )
 
     st.caption(
-        "첫 주 관객 비율이 높을수록 전체 관객 중 많은 비율이 "
-        "개봉 첫 주에 집중되었다는 의미입니다."
+        "점 하나가 영화 한 편을 나타냅니다. "
+        "위쪽에 있을수록 전체 관객 중 첫 주에 관람한 관객의 비율이 높고, "
+        "아래쪽에 있을수록 첫 주 이후에도 관객이 많이 유입된 영화입니다. "
+        "영화명은 점에 마우스를 올리면 확인할 수 있습니다."
     )
 
 else:
